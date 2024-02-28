@@ -28,15 +28,14 @@ def webhook():
     """
     Recieves transaction data, parses it, proccess it and then sends it to the trade api to get executed
     """
-    data = request.json()
-    if isinstance(data, list) or not data:
-        return jsonify({"Error": "No transaction data"})
+    data = request.get_json()
     
     tr = data[0]
     if tr.get("meta", {}).get("err", {}) is not None:
         return jsonify({"Error": "Transaction failed"})
     
     handle_transaction(tr)
+    return jsonify({"success": "parsed txn data"})
 
 
 def handle_transaction(tr: Dict[str, Any]):
@@ -48,7 +47,8 @@ def handle_transaction(tr: Dict[str, Any]):
     logs = tr.get("meta", {}).get("logMessages", [])
     parsed_events = ctx.parse_events_from_logs(logs)
     fill_events = [event for event in parsed_events if isinstance(event, OrderFillEvent)]
-    parsed_fill_events = [event_to_trade_data(event) for event in fill_events]
+    for event in fill_events:
+        event_to_trade_data(event)
 
 def event_to_trade_data(event: OrderFillEvent) -> Dict[str, Any]:
     """
@@ -59,15 +59,16 @@ def event_to_trade_data(event: OrderFillEvent) -> Dict[str, Any]:
     """
     trade = {
         "product": event.product,
-        "taker": event.taker_client_order_id,
-        "maker": event.maker_client_order_id,
+        "taker": str(event.taker_trader_risk_group),
+        "maker": str(event.maker_trader_risk_group),
         "price": event.price,
         "quote_size": event.quote_size,
-        "size": event.base_size
+        "size": event.base_size,
+        "side": event.taker_side
     }
+    
     print(trade)
     return trade
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port="80")
