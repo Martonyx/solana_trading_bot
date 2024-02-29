@@ -1,6 +1,5 @@
 import requests
 import json
-import os
 
 def test_webhook(transaction):
    url = 'http://localhost:80/webhook'

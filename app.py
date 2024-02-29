@@ -25,6 +25,7 @@ def webhook():
     Recieves transaction data, parses it, proccess it and then sends it to the trade api to get executed
     """
 
+
 def handle_transaction(tr: Dict[str, Any]):
     """
     Checks the given transaction object for fill events and calls the Trading API if found.
